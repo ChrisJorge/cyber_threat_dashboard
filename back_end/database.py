@@ -1,7 +1,7 @@
 import os
 import psycopg2 as db 
 from dotenv import load_dotenv, dotenv_values
-
+from datetime import datetime
 
 def connect_to_database() -> None:
     connection = None
@@ -19,6 +19,7 @@ def connect_to_database() -> None:
         return connection
     except db.DatabaseError as error:
         print(f'An error has occurred: {error}')
+        return None
 
 def create_tables(connection: object) -> None:
     table_scripts =[
@@ -96,7 +97,7 @@ def insert_articles(articles: list, connection: object) -> None:
                     else:
                         cursor.execute(tag_table_insert_query, (tag,))
                         tag_id = cursor.fetchone()[0]
-                    cursor.execute(article_tags_insert_query, (article_id, tag_id))
+                    cursor.execute(article_tags_insert_query, (article_id, tag_id,))
             else:
                 continue
         connection.commit()
@@ -106,3 +107,63 @@ def insert_articles(articles: list, connection: object) -> None:
         if connection:
             print('Closing connection')
             connection.close()
+
+def retrieve_articles(connection: object, offset: int, limit: int) -> list[dict]:
+    try:
+        cursor = connection.cursor()
+        select_articles_query = "SELECT * FROM articles ORDER BY published_date DESC LIMIT %s OFFSET %s;"
+        select_publisher_query = "SELECT name FROM publishers WHERE id = %s;"
+        select_tag_ids_query = "SELECT tag_id FROM article_tags WHERE article_id = %s;"
+        select_tag_query = "SELECT name FROM tags WHERE id = %s;"
+        cursor.execute(select_articles_query, (limit, offset))
+        rows = cursor.fetchall()
+        articles = []
+        for row in rows:
+            article_id = row[0]
+            article_title = row[1]
+            article_severity = row[2]
+            article_link = row[3]
+            publisher_id = row[4]
+            article_publish_date = str(row[5]).split(' ')[0].split('-')
+            date_format = datetime(year = int(article_publish_date[0]), month = int(article_publish_date[1]), day = int(article_publish_date[2]))
+            article_publish_date = date_format.strftime("%B %d, %Y")
+            article_description = row[6]
+
+            cursor.execute(select_publisher_query, (publisher_id,))
+            
+            article_publisher = cursor.fetchone()[0]
+
+            cursor.execute(select_tag_ids_query, (article_id,))
+            tag_ids = cursor.fetchall()
+            
+            article_tags = []
+            for tag in tag_ids:
+                tag = tag[0]
+                cursor.execute(select_tag_query, (tag,))
+                article_tags.append(cursor.fetchone()[0])
+            
+            data = {
+                "title": article_title,
+                "description": article_description,
+                "publisher": article_publisher,
+                "date": article_publish_date,
+                "tags": article_tags,
+                "severity": article_severity,
+                "link": article_link
+            }
+            articles.append(data)
+
+        return articles
+    
+    except db.DatabaseError as error:
+        print(f"An error has occurred retrieving articles: {error}")
+    finally:
+        if connection:
+            print('closing connection')
+            connection.close()
+
+con = connect_to_database()
+test = retrieve_articles(con, 0, 3)
+
+for a in test:
+    print(a['date'])

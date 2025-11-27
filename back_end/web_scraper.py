@@ -144,7 +144,7 @@ def scrape_cyber_security_dive(url: str, prefix: str, data: list, max_pages: int
             continue
         
         article_publish_date = standardize_time(article_publish_date_list[1].get_text(strip = True).replace("Updated","").strip())
-        article_link = f'{url}{link['href']}'
+        article_link = f'cybersecuritydive.com/{link['href']}'
 
         if not(article_title) or not(article_description) or not(article_publish_date) or not(article_link):
             continue 
