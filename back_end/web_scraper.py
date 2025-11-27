@@ -55,7 +55,6 @@ def scrape_hacker_news(url: str, data: list, max_pages: int = 1, current_page: i
         link  = article.select_one("a")
         title = article.select_one("h2.home-title")
         date  = article.select_one("span.h-datetime")
-        tags  = article.select_one("span.h-tags")
         desc  = article.select_one("div.home-desc")
 
         article_link = link["href"]
@@ -64,8 +63,6 @@ def scrape_hacker_news(url: str, data: list, max_pages: int = 1, current_page: i
         
         article_publish_date = standardize_time(date.get_text(strip=True).lstrip(": "))
 
-        article_tags = tags.get_text(" ", strip=True).split('/')
-
         if not(article_link) or not(article_title) or not(article_publish_date) or not(article_description):
             continue
 
@@ -73,7 +70,7 @@ def scrape_hacker_news(url: str, data: list, max_pages: int = 1, current_page: i
             "link": article_link,
             "title": article_title,
             "date": article_publish_date,
-            "tags": article_tags,
+            "tags": [],
             "description": article_description,
             "source": "The Hacker News"
         }
@@ -122,7 +119,6 @@ def scrape_cyber_security_news(url: str, data: list, max_pages: int = 1, current
             scrape_cyber_security_news(next_page['href'], extracted_article_data, max_pages, current_page + 1)
     return extracted_article_data
 
-# Cyber Security Dive
 def scrape_cyber_security_dive(url: str, prefix: str, data: list, max_pages: int = 1, current_page: int = 1) -> list:
     extracted_article_data = data
     request_information = requests.get(url)
@@ -144,7 +140,7 @@ def scrape_cyber_security_dive(url: str, prefix: str, data: list, max_pages: int
             continue
         
         article_publish_date = standardize_time(article_publish_date_list[1].get_text(strip = True).replace("Updated","").strip())
-        article_link = f'cybersecuritydive.com/{link['href']}'
+        article_link = f'cybersecuritydive.com{link['href']}'
 
         if not(article_title) or not(article_description) or not(article_publish_date) or not(article_link):
             continue 

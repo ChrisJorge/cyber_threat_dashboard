@@ -14,7 +14,6 @@ def connect_to_database() -> None:
             "password": os.getenv("PASSWORD"),
             "port": os.getenv("PORT")
         }
-        print(params)
         connection = db.connect(**params)
         return connection
     except db.DatabaseError as error:
@@ -161,9 +160,3 @@ def retrieve_articles(connection: object, offset: int, limit: int) -> list[dict]
         if connection:
             print('closing connection')
             connection.close()
-
-con = connect_to_database()
-test = retrieve_articles(con, 0, 3)
-
-for a in test:
-    print(a['date'])

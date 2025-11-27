@@ -1,7 +1,8 @@
 from flask import Flask
 from database import connect_to_database, insert_articles
-from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news, standardize_time
+from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news
 from classification import extract_cves, extract_tags, remove_punctuation, determine_severity
+import random
 app = Flask(__name__)
 
 @app.route('/')
@@ -13,9 +14,13 @@ def scrape_news_sources():
         cyber_security_dive_list = [
         'https://www.cybersecuritydive.com/topic/breaches/', 'https://www.cybersecuritydive.com/topic/vulnerability/',
         'https://www.cybersecuritydive.com/topic/cyberattacks/', 'https://www.cybersecuritydive.com/topic/threats/']
+
         cyber_security_news_list = [
             'https://cybersecuritynews.com/category/threats/', 'https://cybersecuritynews.com/category/cyber-attack/', 
             'https://cybersecuritynews.com/category/vulnerability/', 'https://cybersecuritynews.com/category/data-breaches/']
+        
+        hacker_news_urls = ["https://thehackernews.com/","https://thehackernews.com/search/label/data%20breach",
+                    "https://thehackernews.com/search/label/Cyber%20Attack", "https://thehackernews.com/search/label/Vulnerability"]
         
         for url in cyber_security_dive_list:
             scrape_cyber_security_dive(url = url, prefix= url, data = scraped_articles, max_pages = 3, current_page=1)
@@ -23,16 +28,22 @@ def scrape_news_sources():
         for url in cyber_security_news_list:
             scrape_cyber_security_news(url = url, data = scraped_articles, max_pages = 3, current_page=1)
 
-        scrape_hacker_news(url = 'https://thehackernews.com/', data = scraped_articles, max_pages = 3, current_page=1)
+        for url in hacker_news_urls:
+            scrape_hacker_news(url = url, data = scraped_articles, max_pages = 3, current_page=1)
 
+        verified_articles = []
         for article in scraped_articles:
             CVES = extract_cves(title = article['title'], text = article['description'])
             article['tags'] = extract_tags(title = article['title'], text = article['description'], matched_tags= article['tags'])
             article['severity'] = determine_severity(tags = article['tags'], cves= CVES)
             for cve in CVES:
                 article['tags'].append(cve)
+            
+            if article['tags']:
+                verified_articles.append(article)
         
-        insert_articles(articles=scraped_articles, connection = connect_to_database())
+        random.shuffle(verified_articles)
+        insert_articles(articles=verified_articles, connection = connect_to_database())
 
         return ("Scraping Successful", 200)
     return ("Scraping Unsuccessful", 500)
