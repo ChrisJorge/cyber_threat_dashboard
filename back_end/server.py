@@ -1,11 +1,12 @@
 from flask import Flask
-from database import connect_to_database, insert_articles
+from flask_cors import cross_origin
+from database import connect_to_database, insert_articles, retrieve_articles
 from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news
 from classification import extract_cves, extract_tags, remove_punctuation, determine_severity
 import random
+import json
 app = Flask(__name__)
 
-@app.route('/')
 @app.route('/scrape_news_sources')
 def scrape_news_sources():
     scraped_articles = []
@@ -47,8 +48,15 @@ def scrape_news_sources():
 
         return ("Scraping Successful", 200)
     return ("Scraping Unsuccessful", 500)
+
 @app.route('/fetch_articles/<offset>/<limit>')
+@cross_origin()
 def fetch_articles(offset: int, limit: int) -> list[dict]:
-    return f'{offset}, {limit}'
+    database_connection = connect_to_database()
+    if database_connection:
+        return json.dumps(retrieve_articles(database_connection, offset, limit))
+    else:
+        return ("Fetching Unsuccessful", 500) 
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

@@ -107,7 +107,7 @@ def insert_articles(articles: list, connection: object) -> None:
             print('Closing connection')
             connection.close()
 
-def retrieve_articles(connection: object, offset: int, limit: int) -> list[dict]:
+def retrieve_articles(connection: object, offset: int = 0, limit: int = 0) -> list[dict]:
     try:
         cursor = connection.cursor()
         select_articles_query = "SELECT * FROM articles ORDER BY published_date DESC LIMIT %s OFFSET %s;"
@@ -151,7 +151,6 @@ def retrieve_articles(connection: object, offset: int, limit: int) -> list[dict]
                 "link": article_link
             }
             articles.append(data)
-
         return articles
     
     except db.DatabaseError as error:

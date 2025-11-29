@@ -1,0 +1,12 @@
+.feedRow{
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+
+.feedItem{
+    width: 32%;
+    margin-top: 15px;
+}
