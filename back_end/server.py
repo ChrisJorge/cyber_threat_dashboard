@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import cross_origin
-from database import connect_to_database, insert_articles, retrieve_articles
+from database import connect_to_database, insert_articles, retrieve_articles, retrive_analytics
 from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news
 from classification import extract_cves, extract_tags, remove_punctuation, determine_severity
 import random
@@ -55,6 +55,15 @@ def fetch_articles(offset: int, limit: int) -> list[dict]:
     database_connection = connect_to_database()
     if database_connection:
         return json.dumps(retrieve_articles(database_connection, offset, limit))
+    else:
+        return ("Fetching Unsuccessful", 500) 
+
+@app.route('/fetch_analytic_data')
+@cross_origin()
+def fetch_analytical_data() -> dict:
+    database_connection = connect_to_database()
+    if database_connection:
+        return json.dumps(retrive_analytics(database_connection))
     else:
         return ("Fetching Unsuccessful", 500) 
 

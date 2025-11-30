@@ -159,3 +159,40 @@ def retrieve_articles(connection: object, offset: int = 0, limit: int = 0) -> li
         if connection:
             print('closing connection')
             connection.close()
+
+def retrive_analytics(connection: object) -> dict:
+    try:
+        cursor = connection.cursor()
+        get_row_number_query = "SELECT COUNT(*) FROM articles;"
+        get_specific_severity = "SELECT COUNT(*) FROM articles WHERE severity_level = %s;"
+
+        cursor.execute(get_row_number_query)
+        row_number = cursor.fetchone()[0]
+
+        cursor.execute(get_specific_severity, ("Low",))
+        low_severity_threat_number = cursor.fetchone()[0]
+
+        cursor.execute(get_specific_severity, ("Medium",))
+        medium_severity_threat_number = cursor.fetchone()[0]
+
+        cursor.execute(get_specific_severity, ("High",))
+        high_severity_threat_number = cursor.fetchone()[0]
+
+        critical_severity_threat_number = row_number - (low_severity_threat_number + medium_severity_threat_number + high_severity_threat_number)
+
+        data = {
+            'total': row_number,
+            'low': low_severity_threat_number,
+            'medium': medium_severity_threat_number,
+            'high': high_severity_threat_number,
+            'critical': critical_severity_threat_number
+        }
+
+        return data
+        
+    except db.DatabaseError as error:
+        print(f"an error has occured retrieving the analytic data: {error}")
+    finally:
+        if connection:
+            print('closing connection')
+            connection.close()
