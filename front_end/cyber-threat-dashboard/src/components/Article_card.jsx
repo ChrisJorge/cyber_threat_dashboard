@@ -1,4 +1,3 @@
-import React from 'react'
 import '../styling/Article_card.css'
 import Tag_card from './Tag_card'
 import Severity_tag from './Severity_tag'

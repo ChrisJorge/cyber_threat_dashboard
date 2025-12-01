@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Tag_card = ({name}) => {
   return (
     <div className="tagContainer">

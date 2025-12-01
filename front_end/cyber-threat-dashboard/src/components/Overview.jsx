@@ -1,4 +1,3 @@
-import React from 'react'
 import '../styling/Overview.css'
 const Overview = ({total, critical, high, medium, low}) => {
   return (

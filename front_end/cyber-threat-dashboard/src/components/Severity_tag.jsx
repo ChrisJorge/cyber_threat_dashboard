@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Severity_tag = ({level}) => {
     if(level === "Low")
     {
