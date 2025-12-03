@@ -1,8 +1,8 @@
 from flask import Flask
 from flask_cors import cross_origin
-from database import connect_to_database, insert_articles, retrieve_articles, retrive_analytics
+from database import connect_to_database, insert_articles, retrieve_articles, retrieve_analytics, retrieve_monthly_analytics, retrieve_tag_analytics_specific
 from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news
-from classification import extract_cves, extract_tags, remove_punctuation, determine_severity
+from classification import extract_cves, extract_tags, determine_severity
 import random
 import json
 app = Flask(__name__)
@@ -63,9 +63,66 @@ def fetch_articles(offset: int, limit: int) -> list[dict]:
 def fetch_analytical_data() -> dict:
     database_connection = connect_to_database()
     if database_connection:
-        return json.dumps(retrive_analytics(database_connection))
+        return json.dumps(retrieve_analytics(database_connection))
     else:
         return ("Fetching Unsuccessful", 500) 
 
+@app.route('/fetch_monthly_analytics')
+@app.route('/fetch_monthly_analytics/<years>')
+@app.route('/fetch_monthly_analytics/<years>/<months>')
+@cross_origin()
+def fetch_monthly_statistic_data(years: str = None, months: str = None) -> dict:
+    
+    if years:
+        years = years.split(',')
+        for index in range(len(years)):
+            years[index] = int(years[index])
+    if months:
+        months = months.split(',')
+        for index in range(len(months)):
+            months[index] = int(months[index])
+
+    database_connection = connect_to_database()
+    if database_connection:
+        if not(years) and not(months):  
+            return json.dumps(retrieve_monthly_analytics(database_connection))
+        elif years and not(months):
+            return json.dumps(retrieve_monthly_analytics(connection = database_connection, years = years))
+        else:
+            return json.dumps(retrieve_monthly_analytics(database_connection, years, months))
+    else:
+        return ("Fetching Unsuccessful", 500)
+
+
+@app.route('/fetch_tag_analytics')
+@app.route('/fetch_tag_analytics/<tags>')
+@app.route('/fetch_tag_analytics/<tags>/<years>')
+@app.route('/fetch_tag_analytics/<tags>/<years>/<months>')
+def fetch_tag_statistic_data(tags: str = None, years: str = None, months: str = None) -> dict:
+
+    if tags:
+        tags = tags.split(',')
+
+    if years:
+        years = years.split(',')
+        for index in range(len(years)):
+            years[index] = int(years[index])
+
+    if months:
+        months = months.split(',')
+        for index in range(len(months)):
+            months[index] = int(months[index])
+    
+    database_connection = connect_to_database()
+    if not(tags) and not(years) and not(months):
+        return json.dumps(retrieve_tag_analytics_specific(database_connection))
+    elif tags and not(years) and not(months):
+        return json.dumps(retrieve_tag_analytics_specific(connection = database_connection, tags = tags))
+    elif tags and years and not(months):
+        return json.dumps(retrieve_tag_analytics_specific(connection = database_connection, tags = tags, years = years))
+    else:
+        return json.dumps(retrieve_tag_analytics_specific(connection = database_connection, tags = tags, years = years, months= months))
+    
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

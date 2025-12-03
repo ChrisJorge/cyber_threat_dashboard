@@ -160,7 +160,7 @@ def retrieve_articles(connection: object, offset: int = 0, limit: int = 0) -> li
             print('closing connection')
             connection.close()
 
-def retrive_analytics(connection: object) -> dict:
+def retrieve_analytics(connection: object) -> dict:
     try:
         cursor = connection.cursor()
         get_row_number_query = "SELECT COUNT(*) FROM articles;"
@@ -192,6 +192,112 @@ def retrive_analytics(connection: object) -> dict:
         
     except db.DatabaseError as error:
         print(f"an error has occured retrieving the analytic data: {error}")
+    finally:
+        if connection:
+            print('closing connection')
+            connection.close()
+
+def retrieve_monthly_analytics(connection: object, years: list[int] = [datetime.now().year], months: list[int] = []) -> dict:
+    try:
+        cursor = connection.cursor()
+        month_dic = {1: 'January', 2: 'February', 3: 'March', 4: 'April',
+                    5: 'May', 6: 'June', 7: 'July', 8: 'August', 
+                    9: 'September', 10: 'October', 11: 'November', 12: 'December'}
+        months.sort()
+        years.sort()
+        data = {}
+
+        select_month_data_query = "SELECT COUNT(*) FROM articles WHERE EXTRACT(YEAR FROM published_date) = %s AND EXTRACT(MONTH FROM published_date) = %s;"
+        
+        print(years,months)
+        for year in years:
+            if months:
+                for month in months:
+                    if type(month) != int:
+                        raise TypeError('The months list must contain integer elements')
+                    elif month < 1 or month > 12:
+                        raise ValueError('month must be within the range 1-12')
+                    cursor.execute(select_month_data_query, (year, month,))
+                    month_name = month_dic[month]
+                    key = f"{month_name}-{year}"
+                    data[key] = cursor.fetchone()[0]
+            else:
+                for month in range(1,13):
+                    cursor.execute(select_month_data_query, (year, month,))
+                    month_name = month_dic[month]
+                    key = f"{month_name}-{year}"
+                    data[key] = cursor.fetchone()[0]
+        
+        return data
+    except db.DatabaseError as error:
+        print(f"An error has occurred retrieving monthly analytic data: {error}")
+    finally:
+        if connection:
+            print('Closing connection')
+            connection.close()
+
+def retrieve_tag_analytics_specific(connection: object, tags: list[str] = [], years: list[int] = [datetime.now().year], months: list[int] = []) -> dict:
+    try:
+        cursor = connection.cursor()
+        months.sort()
+        years.sort()
+
+        select_all_tags_query = "SELECT * FROM tags;"
+        select_specific_tags = "SELECT id FROM tags WHERE name = %s;"
+        select_articles_by_tag_and_year = """
+        SELECT id
+        FROM articles, article_tags
+        WHERE article_tags.tag_id = %s AND article_tags.article_id = articles.id AND EXTRACT(YEAR FROM articles.published_date) = %s;
+        """
+        select_articles_by_tag_year_and_month = """
+        SELECT id
+        FROM articles, article_tags
+        WHERE article_tags.tag_id = %s AND article_tags.article_id = articles.id AND EXTRACT(YEAR FROM articles.published_date) = %s AND EXTRACT(MONTH FROM articles.published_date) = %s;
+        """
+        
+        month_dic = {1: 'January', 2: 'February', 3: 'March', 4: 'April',
+                    5: 'May', 6: 'June', 7: 'July', 8: 'August', 
+                    9: 'September', 10: 'October', 11: 'November', 12: 'December'}
+        
+        queried_tags = []
+        if not tags:
+            cursor.execute(select_all_tags_query)
+            queried_tags = cursor.fetchall()
+        else:
+            for tag in tags:
+                cursor.execute(select_specific_tags, (tag,))
+                tag_id = cursor.fetchone()
+                if tag_id:
+                    queried_tags.append((tag_id[0], tag))
+        
+        data = {}
+        for year in years:
+            if months:
+                for month in months:
+                    if type(month) != int:
+                        raise TypeError('The months list must contain integer elements')
+                    elif month < 1 or month > 12:
+                        raise ValueError('month must be within the range 1-12')
+                    for tag in queried_tags:
+                        cursor.execute(select_articles_by_tag_year_and_month, (tag[0], year, month,))
+                        key = f"{tag[1]}-{month_dic[month]}-{year}"
+                        article_count = cursor.fetchall()
+                        if article_count:
+                            data[key] = len(article_count)
+                        else:
+                            data[key] = 0
+            else:
+                for tag in queried_tags:
+                    cursor.execute(select_articles_by_tag_and_year, (tag[0], year,))
+                    key = f"{tag[1]}-{year}"
+                    article_count = cursor.fetchall()
+                    if article_count:
+                        data[key] = len(article_count)
+                    else:
+                        data[key] = 0
+        return data
+    except db.DatabaseError as error:
+        print(f"An error has occurred retrieving tag analytic data: {error}")
     finally:
         if connection:
             print('closing connection')
