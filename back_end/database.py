@@ -209,7 +209,6 @@ def retrieve_monthly_analytics(connection: object, years: list[int] = [datetime.
 
         select_month_data_query = "SELECT COUNT(*) FROM articles WHERE EXTRACT(YEAR FROM published_date) = %s AND EXTRACT(MONTH FROM published_date) = %s;"
         
-        print(years,months)
         for year in years:
             if months:
                 for month in months:
@@ -219,13 +218,13 @@ def retrieve_monthly_analytics(connection: object, years: list[int] = [datetime.
                         raise ValueError('month must be within the range 1-12')
                     cursor.execute(select_month_data_query, (year, month,))
                     month_name = month_dic[month]
-                    key = f"{month_name}-{year}"
+                    key = f"{month}-{month_name}-{year}"
                     data[key] = cursor.fetchone()[0]
             else:
                 for month in range(1,13):
                     cursor.execute(select_month_data_query, (year, month,))
                     month_name = month_dic[month]
-                    key = f"{month_name}-{year}"
+                    key = f"{month}-{month_name}-{year}"
                     data[key] = cursor.fetchone()[0]
         
         return data
@@ -289,7 +288,7 @@ def retrieve_tag_analytics_specific(connection: object, tags: list[str] = [], ye
             else:
                 for tag in queried_tags:
                     cursor.execute(select_articles_by_tag_and_year, (tag[0], year,))
-                    key = f"{tag[1]}-{year}"
+                    key = f"{tag[0]}-{tag[1]}-{year}"
                     article_count = cursor.fetchall()
                     if article_count:
                         data[key] = len(article_count)

@@ -72,7 +72,6 @@ def fetch_analytical_data() -> dict:
 @app.route('/fetch_monthly_analytics/<years>/<months>')
 @cross_origin()
 def fetch_monthly_statistic_data(years: str = None, months: str = None) -> dict:
-    
     if years:
         years = years.split(',')
         for index in range(len(years)):
@@ -98,6 +97,7 @@ def fetch_monthly_statistic_data(years: str = None, months: str = None) -> dict:
 @app.route('/fetch_tag_analytics/<tags>')
 @app.route('/fetch_tag_analytics/<tags>/<years>')
 @app.route('/fetch_tag_analytics/<tags>/<years>/<months>')
+@cross_origin()
 def fetch_tag_statistic_data(tags: str = None, years: str = None, months: str = None) -> dict:
 
     if tags:

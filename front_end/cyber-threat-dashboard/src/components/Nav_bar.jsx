@@ -1,16 +1,14 @@
 import '../styling/Nav_bar.css'
+import { Link } from 'react-router-dom'
 const Nav_bar = () => {
   return (
     <div className="navBarContainer">
-        <div className="navigationOptionContainer">
-            <p className="optionText">Insights</p>
-        </div>
-        <div className="navigationOptionContainer">
-            <p className="optionText">Feed</p>
-        </div>
-        <div className="navigationOptionContainer">
-            <p className="optionText">Profile</p>
-        </div>
+          <Link to={"/analytics"} className='navigationOptionContainer'>
+              <p className="optionText">Insights</p>
+          </Link>
+         <Link to={"/"} className='navigationOptionContainer'>
+              <p className="optionText">Feed</p>
+        </Link>
     </div>
   )
 }
