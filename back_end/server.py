@@ -51,11 +51,12 @@ def scrape_news_sources():
     return ("Scraping Unsuccessful", 500)
 
 @app.route('/fetch_articles/<offset>/<limit>')
+@app.route('/fetch_articles/<offset>/<limit>/<level>')
 @cross_origin()
-def fetch_articles(offset: int, limit: int) -> list[dict]:
+def fetch_articles(offset: int, limit: int, level: str = None) -> list[dict]:
     database_connection = connect_to_database()
     if database_connection:
-        return json.dumps(retrieve_articles(database_connection, offset, limit))
+        return json.dumps(retrieve_articles(connection= database_connection, offset = offset, limit = limit, level=level))
     else:
         return ("Fetching Unsuccessful", 500) 
 
@@ -100,7 +101,11 @@ def fetch_monthly_statistic_data(years: str = None, months: str = None) -> dict:
 @app.route('/fetch_tag_analytics/<tags>/<years>/<months>')
 @cross_origin()
 def fetch_tag_statistic_data(tags: str = None, years: str = None, months: str = None) -> dict:
-    if tags:
+    
+    if tags == 'skip':
+        tags = None
+
+    if tags and tags != 'skip':
         tags = tags.split(',')
 
     if years:
@@ -122,7 +127,6 @@ def fetch_tag_statistic_data(tags: str = None, years: str = None, months: str = 
         return json.dumps(retrieve_tag_analytics_specific(connection = database_connection, tags = tags, years = years))
     else:
         return json.dumps(retrieve_tag_analytics_specific(connection = database_connection, tags = tags, years = years, months= months))
-    
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

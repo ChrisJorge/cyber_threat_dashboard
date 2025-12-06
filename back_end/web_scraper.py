@@ -208,5 +208,3 @@ def scrape_cyber_crime_magazine(url: str, data: list, prefix: str, max_pages: in
     finally:
         if driver:
             driver.close()
-
-print(len(scrape_cyber_crime_magazine(url = 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', data = [], prefix= 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', max_pages = 2, current_page=1)))

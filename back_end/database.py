@@ -107,18 +107,23 @@ def insert_articles(articles: list, connection: object) -> None:
             print('Closing connection')
             connection.close()
 
-def retrieve_articles(connection: object, offset: int = 0, limit: int = 0) -> list[dict]:
+def retrieve_articles(connection: object, offset: int = 0, limit: int = 0, level: str = None) -> list[dict]:
     try:
         cursor = connection.cursor()
-        select_articles_query = "SELECT * FROM articles ORDER BY published_date DESC LIMIT %s OFFSET %s;"
+        select_articles_query = "SELECT * FROM articles ORDER BY id DESC, published_date DESC LIMIT %s OFFSET %s;"
+        select_articles_by_threat_severity_query = "SELECT * FROM articles WHERE severity_level = %s ORDER BY id DESC, published_date DESC LIMIT %s OFFSET %s;"
         select_publisher_query = "SELECT name FROM publishers WHERE id = %s;"
         select_tag_ids_query = "SELECT tag_id FROM article_tags WHERE article_id = %s;"
         select_tag_query = "SELECT name FROM tags WHERE id = %s;"
-        cursor.execute(select_articles_query, (limit, offset))
+        if level:
+            cursor.execute(select_articles_by_threat_severity_query, (level, limit, offset))
+        else:
+            cursor.execute(select_articles_query, (limit, offset))
         rows = cursor.fetchall()
         articles = []
         for row in rows:
             article_id = row[0]
+            print(article_id)
             article_title = row[1]
             article_severity = row[2]
             article_link = row[3]
@@ -301,3 +306,16 @@ def retrieve_tag_analytics_specific(connection: object, tags: list[str] = [], ye
         if connection:
             print('closing connection')
             connection.close()
+
+def retrieve_years(connection: object) -> list:
+    try:
+        cursor = connection.cursor()
+        select_all_years = "SELECT DISTINCT EXTRACT(YEAR FROM published_date) FROM articles"
+        cursor.execute(select_all_years)
+        dates = (cursor.fetchall())
+        dates_list = []
+        for date in dates:
+            dates_list.append(int(date[0]))
+        return dates_list
+    except db.DatabaseError as error:
+        print(f'An error has occurred retrieving the years of the data: {error}')

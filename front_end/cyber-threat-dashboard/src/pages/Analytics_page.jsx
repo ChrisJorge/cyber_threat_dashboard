@@ -10,7 +10,7 @@ const Analytics_page = () => {
     const [yearlyDataChartGraphColor, setYearlyDataChartGraphColor] = useState('#E6E6FA')
     const [yearlyTagOverviewGraphColor, setYearlyTagOverviewGraphColor] = useState('#E6E6FA')
     const [yearlyTagData, setYearlyTagData] = useState({})
-
+    
    const FetchYearlyData = async() => {
         let response = await axios.get('http://localhost:8000/fetch_monthly_analytics');
         return response
@@ -20,7 +20,6 @@ const Analytics_page = () => {
         let response = await axios.get('http://localhost:8000/fetch_tag_analytics')
         return response
    }
-
 
    const ModifyYearlyDataGraph = () => {
         setYearlyDataChartGraph(document.getElementById('chartThreatOverview').value)
