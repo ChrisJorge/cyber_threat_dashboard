@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as scraper
 from classification import remove_punctuation
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import os
 from dotenv import load_dotenv, dotenv_values
@@ -170,7 +171,9 @@ def scrape_cyber_crime_magazine(url: str, data: list, prefix: str, max_pages: in
         load_dotenv()
         extracted_article_data = data
         service = Service(executable_path = os.getenv("SELENIUM_PATH"))
-        driver = webdriver.Chrome(service=service)
+        chrome_options = Options()
+        chrome_options.add_argument("--headless=new")
+        driver = webdriver.Chrome(service=service, options = chrome_options)
         driver.implicitly_wait(10)
         driver.get(url)
         content = driver.find_elements(By.CLASS_NAME, "kn-label-left")
@@ -196,7 +199,6 @@ def scrape_cyber_crime_magazine(url: str, data: list, prefix: str, max_pages: in
                 }
             extracted_article_data.append(data)
         if max_pages != current_page:
-            driver.close()
             new_url = f'{prefix}?view_14_page={current_page + 1}'
             print(f'Going to scrape {new_url}')
             scrape_cyber_crime_magazine(new_url, extracted_article_data, prefix, max_pages, current_page + 1)
@@ -204,4 +206,7 @@ def scrape_cyber_crime_magazine(url: str, data: list, prefix: str, max_pages: in
     except Exception as error:
         print(f"An error has occurred scraping cyber security ventures: {error}")
     finally:
-        driver.close()
+        if driver:
+            driver.close()
+
+print(len(scrape_cyber_crime_magazine(url = 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', data = [], prefix= 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', max_pages = 2, current_page=1)))
