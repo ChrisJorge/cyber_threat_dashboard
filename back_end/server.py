@@ -1,7 +1,7 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import cross_origin
 from database import connect_to_database, insert_articles, retrieve_articles, retrieve_analytics, retrieve_monthly_analytics, retrieve_tag_analytics_specific
-from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news
+from web_scraper import scrape_cyber_security_dive, scrape_cyber_security_news, scrape_hacker_news, scrape_cyber_crime_magazine
 from classification import extract_cves, extract_tags, determine_severity
 import random
 import json
@@ -32,6 +32,7 @@ def scrape_news_sources():
         for url in hacker_news_urls:
             scrape_hacker_news(url = url, data = scraped_articles, max_pages = 3, current_page=1)
 
+        scrape_cyber_crime_magazine(url = 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', data = scraped_articles, prefix= 'https://cybersecurityventures.com/today/#cybercrime-magazine-today/', max_pages = 23, current_page=1)
         verified_articles = []
         for article in scraped_articles:
             CVES = extract_cves(title = article['title'], text = article['description'])
@@ -99,7 +100,6 @@ def fetch_monthly_statistic_data(years: str = None, months: str = None) -> dict:
 @app.route('/fetch_tag_analytics/<tags>/<years>/<months>')
 @cross_origin()
 def fetch_tag_statistic_data(tags: str = None, years: str = None, months: str = None) -> dict:
-
     if tags:
         tags = tags.split(',')
 

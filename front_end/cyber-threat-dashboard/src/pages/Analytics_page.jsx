@@ -21,6 +21,7 @@ const Analytics_page = () => {
         return response
    }
 
+
    const ModifyYearlyDataGraph = () => {
         setYearlyDataChartGraph(document.getElementById('chartThreatOverview').value)
    }
@@ -74,7 +75,6 @@ const Analytics_page = () => {
 
     InitialFetch()
    }, [])
-   FetchYearlyTagData()
 
   return (
     <>

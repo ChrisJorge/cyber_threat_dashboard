@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup as scraper
 from classification import remove_punctuation
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+import os
+from dotenv import load_dotenv, dotenv_values
 
 def standardize_time(date: str) -> str:
     date = remove_punctuation(date).split(' ')
@@ -159,3 +164,44 @@ def scrape_cyber_security_dive(url: str, prefix: str, data: list, max_pages: int
         print(f'going to scrape {prefix}?page={current_page + 1}')
         scrape_cyber_security_dive(f'{prefix}?page={current_page + 1}', prefix, extracted_article_data, max_pages, current_page + 1)
     return extracted_article_data
+
+def scrape_cyber_crime_magazine(url: str, data: list, prefix: str, max_pages: int = 1, current_page: int = 1) -> list:
+    try:
+        load_dotenv()
+        extracted_article_data = data
+        service = Service(executable_path = os.getenv("SELENIUM_PATH"))
+        driver = webdriver.Chrome(service=service)
+        driver.implicitly_wait(10)
+        driver.get(url)
+        content = driver.find_elements(By.CLASS_NAME, "kn-label-left")
+
+        for article in content:
+            links = article.find_elements(By.CSS_SELECTOR, "div.kn-label-left a")
+            content_list = article.text.splitlines()
+            if len(content_list) < 4:
+                continue
+            article_publish_date = content_list[0]
+            article_title = content_list[1]
+            article_description = content_list[2].replace("Full Story","")
+            article_source = content_list[3].replace("Source: ", "")
+            article_link = links[-1].get_attribute("href")
+
+            data = {
+                    "link": article_link,
+                    "title": article_title,
+                    "date": article_publish_date,
+                    "tags": [],
+                    "description": article_description,
+                    "source": article_source
+                }
+            extracted_article_data.append(data)
+        if max_pages != current_page:
+            driver.close()
+            new_url = f'{prefix}?view_14_page={current_page + 1}'
+            print(f'Going to scrape {new_url}')
+            scrape_cyber_crime_magazine(new_url, extracted_article_data, prefix, max_pages, current_page + 1)
+        return extracted_article_data
+    except Exception as error:
+        print(f"An error has occurred scraping cyber security ventures: {error}")
+    finally:
+        driver.close()
